@@ -6,6 +6,7 @@ Tested up to: 3.5.2
 Stable tag: trunk
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl.html
+Donate link: http://www.wpinspired.com/ip-based-login/
 
 IP Based Login allows you to directly login from an allowed IP. 
 
