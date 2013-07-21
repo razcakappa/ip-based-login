@@ -33,6 +33,8 @@ That's it. You're done!
 
 == Changelog ==
 
+= 1.1 =
+* IP Based Login will now drop the database if the plugin is uninstalled and not when the plugin is deactivated
 
 = 1.0 =
 

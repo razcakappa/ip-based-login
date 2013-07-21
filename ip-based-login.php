@@ -306,7 +306,7 @@ function ip_based_login_option_page(){
 }	
 
 // Sorry to see you going
-register_deactivation_hook( __FILE__, 'ip_based_login_deactivation');
+register_uninstall_hook( __FILE__, 'ip_based_login_deactivation');
 
 function ip_based_login_deactivation(){
 
