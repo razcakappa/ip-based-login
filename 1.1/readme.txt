@@ -14,7 +14,7 @@ IP Based Login allows you to directly login from an allowed IP.
 
 IP Based Login allows you to directly login from an allowed IP. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
 
-Features in IP Based Login 1.0 include:
+Features in IP Based Login 1.1 include:
 
 * Create IP ranges
 * Choose the username accessible when accessed by the IP existing in provided range
