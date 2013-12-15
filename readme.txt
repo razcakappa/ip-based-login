@@ -2,8 +2,8 @@
 Contributors: brijeshk89
 Tags: auto, login, ip, based, authentication, access, credentials, easy access
 Requires at least: 3.0
-Tested up to: 3.7.1
-Stable tag: 1.1
+Tested up to: 3.8
+Stable tag: 1.2
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl.html
 Donate link: http://www.wpinspired.com/ip-based-login/
@@ -14,7 +14,7 @@ IP Based Login allows you to directly login from an allowed IP.
 
 IP Based Login allows you to directly login from an allowed IP. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
 
-Features in IP Based Login 1.1 include:
+Features in IP Based Login 1.2 include:
 
 * Create IP ranges
 * Choose the username accessible when accessed by the IP existing in provided range
@@ -32,6 +32,9 @@ Upload the IP Based Login plugin to your blog, Activate it.
 That's it. You're done!
 
 == Changelog ==
+
+= 1.2 =
+Compatible with WordPress 3.8
 
 = 1.1 =
 * IP Based Login will now drop the database if the plugin is uninstalled and not when the plugin is deactivated
