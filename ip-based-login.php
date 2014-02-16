@@ -1,13 +1,13 @@
 <?php
 /**
  * @package ip-based-login
- * @version 1.2
+ * @version 1.3
  */
 /*
 Plugin Name: IP Based Login
 Plugin URI: http://wordpress.org/extend/plugins/ip-based-login/
 Description: IP Based Login is a plugin which allows you to directly login from an allowed IP. You can create ranges and define the IP range which can get access to a particular user. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
-Version: 1.2
+Version: 1.3
 Author: Brijesh Kothari
 Author URI: http://www.wpinspired.com/
 License: GPLv3 or later
@@ -34,7 +34,7 @@ if(!function_exists('add_action')){
 	exit;
 }
 
-define('ipbl_version', '1.2');
+define('ipbl_version', '1.3');
 
 // Ok so we are now ready to go
 register_activation_hook( __FILE__, 'ip_based_login_activation');
@@ -51,15 +51,41 @@ $sql = "
 CREATE TABLE IF NOT EXISTS `".$wpdb->prefix."ip_based_login` (
   `rid` int(10) NOT NULL AUTO_INCREMENT,
   `username` varchar(255) NOT NULL,
-  `start` int(10) NOT NULL,
-  `end` int(10) NOT NULL,
+  `start` bigint(20) NOT NULL,
+  `end` bigint(20) NOT NULL,
+  `status` tinyint(2) NOT NULL DEFAULT '1',
   `date` int(10) NOT NULL,
   PRIMARY KEY (`rid`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;";
 
 $wpdb->query($sql);
 
 add_option('ipbl_version', ipbl_version);
+
+}
+
+add_action( 'plugins_loaded', 'ip_based_login_update_check' );
+
+function ip_based_login_update_check(){
+
+global $wpdb;
+
+	$sql = array();
+	$current_version = get_option('ipbl_version');
+
+	if($current_version < 1.3){
+		$sql[] = "ALTER TABLE `".$wpdb->prefix."ip_based_login` CHANGE `start` `start` BIGINT( 20 ) NOT NULL ;";
+		$sql[] = "ALTER TABLE `".$wpdb->prefix."ip_based_login` CHANGE `end` `end` BIGINT( 20 ) NOT NULL ;";
+		$sql[] = "ALTER TABLE `".$wpdb->prefix."ip_based_login` ADD `status` TINYINT( 2 ) NOT NULL DEFAULT '1' AFTER `end` ;";
+	}
+
+	if($current_version < ipbl_version){
+		foreach($sql as $sk => $sv){
+			$wpdb->query($sv);
+		}
+
+		update_option('ipbl_version', ipbl_version);
+	}
 
 }
 
@@ -68,7 +94,7 @@ function triger_login(){
 	global $wpdb;
 	
 	$logged_ip = getip();
-	$query = "SELECT * FROM ".$wpdb->prefix."ip_based_login WHERE ".ip2long($logged_ip)." BETWEEN `start` AND `end`";
+	$query = "SELECT * FROM ".$wpdb->prefix."ip_based_login WHERE ".ip2long($logged_ip)." BETWEEN `start` AND `end` AND `status` = 1";
 	$result = selectquery($query);
 	$username = $result['username'];
 	
@@ -147,6 +173,14 @@ function valid_ip($ip){
 	return true;
 }
 
+function is_checked($post){
+
+	if(!empty($_POST[$post])){
+		return true;
+	}	
+	return false;
+}
+
 function report_error($error = array()){
 
 	if(empty($error)){
@@ -187,6 +221,18 @@ function ip_based_login_option_page(){
 			. '</p></div>';	
 	}
 	
+	if(isset($_GET['statusid'])){
+		
+		$statusid = (int) sanitize_variables($_GET['statusid']);
+		$setstatus = sanitize_variables($_GET['setstatus']);
+		$_setstatus = ($setstatus == 'disable' ? 0 : 1);
+		
+		$wpdb->query("UPDATE ".$wpdb->prefix."ip_based_login SET `status` = '".$_setstatus."' WHERE `rid` = '".$statusid."'");
+		echo '<div id="message" class="updated fade"><p>'
+			. __('IP range has been '.$setstatus.'d successfully', 'ip-based-login')
+			. '</p></div>';	
+	}
+	
 	if(isset($_POST['add_iprange'])){
 		global $ip_based_login_options;
 
@@ -219,6 +265,7 @@ function ip_based_login_option_page(){
 			$options['username'] = $ip_based_login_options['username'];
 			$options['start'] = ip2long($ip_based_login_options['start']);
 			$options['end'] = ip2long($ip_based_login_options['end']);
+			$options['status'] = (is_checked('status') ? 1 : 0);
 			$options['date'] = date('Ymd');
 			
 			$wpdb->insert($wpdb->prefix.'ip_based_login', $options);
@@ -264,6 +311,12 @@ function ip_based_login_option_page(){
 			  <input type="text" size="25" value="<?php echo((isset($_POST['end_ip']) ? $_POST['end_ip'] : '')); ?>" name="end_ip" /> <?php echo __('End IP of the range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
+		  <tr>
+			<th scope="row" valign="top"><?php echo __('Active','ip-based-login'); ?></th>
+			<td>
+			  <input type="checkbox" <?php if(!isset($_POST['add_iprange']) || is_checked('status')) echo 'checked="checked"'; ?> name="status" /> <?php echo __('Select the chekbox to set this range as active','ip-based-login'); ?> <br />
+			</td>
+		  </tr>
 		</table><br />
 		<input name="add_iprange" class="button action" value="<?php echo __('Add IP range','ip-based-login'); ?>" type="submit" />		
 	  </form>
@@ -283,6 +336,7 @@ function ip_based_login_option_page(){
 			<?php
 				
 				foreach($ipranges as $ik => $iv){
+					$status_button = (!empty($iv['status']) ? 'disable' : 'enable');
 					echo '
 					<tr>
 						<td>
@@ -295,7 +349,8 @@ function ip_based_login_option_page(){
 							'.long2ip($iv['end']).'
 						</td>
 						<td>
-							<a class="submitdelete" href="options-general.php?page=ip-based-login&delid='.$iv['rid'].'" onclick="return confirm(\'Are you sure you want to delete this IP range ?\')">Delete</a>
+							<a class="submitdelete" href="options-general.php?page=ip-based-login&delid='.$iv['rid'].'" onclick="return confirm(\'Are you sure you want to delete this IP range ?\')">Delete</a>&nbsp;&nbsp;
+							<a class="submitdelete" href="options-general.php?page=ip-based-login&statusid='.$iv['rid'].'&setstatus='.$status_button.'" onclick="return confirm(\'Are you sure you want to '.$status_button.' this IP range ?\')">'.ucfirst($status_button).'</a>
 						</td>
 					</tr>';
 				}
