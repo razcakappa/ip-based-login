@@ -1,13 +1,13 @@
 <?php
 /**
  * @package ip-based-login
- * @version 1.3
+ * @version 1.3.1
  */
 /*
 Plugin Name: IP Based Login
 Plugin URI: http://wordpress.org/extend/plugins/ip-based-login/
 Description: IP Based Login is a plugin which allows you to directly login from an allowed IP. You can create ranges and define the IP range which can get access to a particular user. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
-Version: 1.3
+Version: 1.3.1
 Author: Brijesh Kothari
 Author URI: http://www.wpinspired.com/
 License: GPLv3 or later
@@ -34,7 +34,7 @@ if(!function_exists('add_action')){
 	exit;
 }
 
-define('ipbl_version', '1.3');
+define('ipbl_version', '1.3.1');
 
 // Ok so we are now ready to go
 register_activation_hook( __FILE__, 'ip_based_login_activation');
@@ -198,10 +198,24 @@ function report_error($error = array()){
 					. '</p></div>';
 }
 
+function ipbl_objectToArray($d){
+  if(is_object($d)){
+    $d = get_object_vars($d);
+  }
+  
+  if(is_array($d)){
+    return array_map(__FUNCTION__, $d); // recursive
+  }elseif(is_object($d)){
+    return ipbl_objectToArray($d);
+  }else{
+    return $d;
+  }
+}
+
 function ip_based_login_option_page(){
 
 	global $wpdb;
-	
+	 
 	if(!current_user_can('manage_options')){
 		wp_die('Sorry, but you do not have permissions to change settings.');
 	}
@@ -287,6 +301,9 @@ function ip_based_login_option_page(){
 	
 	$ipranges = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."ip_based_login;", 'ARRAY_A');
 	
+	// A list of all users
+	$_users = get_users();	
+	
 	?>
 	<div class="wrap">
 	  <h2><?php echo __('IP Based Login Settings','ip-based-login'); ?></h2>
@@ -296,7 +313,15 @@ function ip_based_login_option_page(){
 		  <tr>
 			<th scope="row" valign="top"><?php echo __('Username','ip-based-login'); ?></th>
 			<td>
-			  <input type="text" size="25" value="<?php echo((isset($_POST['username']) ? $_POST['username'] : '')); ?>" name="username" /> <?php echo __('Username to be logged in as when accessed from the below IP range','ip-based-login'); ?> <br />
+            	<select name="username">
+            	<?php
+					foreach($_users as $uk => $uv){
+						$_users[$uk] = ipbl_objectToArray($uv);
+						echo '<option value="'.$_users[$uk]['data']['user_login'].'" '.($ip_based_login_options['username'] == $_users[$uk]['data']['user_login'] ? 'selected="selected"' : '').'>'.$_users[$uk]['data']['user_login'].'</option>';
+					}					
+				?>
+                </select>&nbsp;&nbsp;
+			  <?php echo __('Username to be logged in as when accessed from the below IP range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
 		  <tr>
@@ -314,7 +339,7 @@ function ip_based_login_option_page(){
 		  <tr>
 			<th scope="row" valign="top"><?php echo __('Active','ip-based-login'); ?></th>
 			<td>
-			  <input type="checkbox" <?php if(!isset($_POST['add_iprange']) || is_checked('status')) echo 'checked="checked"'; ?> name="status" /> <?php echo __('Select the chekbox to set this range as active','ip-based-login'); ?> <br />
+			  <input type="checkbox" <?php if(!isset($_POST['add_iprange']) || is_checked('status')) echo 'checked="checked"'; ?> name="status" /> <?php echo __('Select the checkbox to set this range as active','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
 		</table><br />
