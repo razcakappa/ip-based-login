@@ -1,13 +1,13 @@
 <?php
 /**
  * @package ip-based-login
- * @version 1.3.1
+ * @version 1.3.2
  */
 /*
 Plugin Name: IP Based Login
 Plugin URI: http://wordpress.org/extend/plugins/ip-based-login/
 Description: IP Based Login is a plugin which allows you to directly login from an allowed IP. You can create ranges and define the IP range which can get access to a particular user. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
-Version: 1.3.1
+Version: 1.3.2
 Author: Brijesh Kothari
 Author URI: http://www.wpinspired.com/
 License: GPLv3 or later
@@ -34,7 +34,19 @@ if(!function_exists('add_action')){
 	exit;
 }
 
-define('ipbl_version', '1.3.1');
+define('ipbl_version', '1.3.2');
+
+// This function adds a link in admin toolbar
+function ipbl_admin_bar() {
+	global $wp_admin_bar;
+
+	$wp_admin_bar->add_node(array(
+		'id'    => 'ipbl-link',
+		'title' => 'Logged in by IP Based Login ('.getip().')',
+		'href'  => 'http://www.wpinspired.com/ip-based-login'
+	));
+
+}
 
 // Ok so we are now ready to go
 register_activation_hook( __FILE__, 'ip_based_login_activation');
@@ -108,6 +120,11 @@ function triger_login(){
 		wp_set_current_user($user_id, $username);
 		wp_set_auth_cookie($user_id);
 		do_action('wp_login', $username);
+	}
+	
+	// Did we login the user ?
+	if(!empty($username)){
+		add_action('wp_before_admin_bar_render', 'ipbl_admin_bar');
 	}
 }
 
@@ -270,6 +287,37 @@ function ip_based_login_option_page(){
 			$error[] = 'Please provide a valid end IP';			
 		}
 		
+		// This is to check if there is any other range exists with the same Start or End IP
+		$ip_exists_query = "SELECT * FROM ".$wpdb->prefix."ip_based_login WHERE 
+		`start` BETWEEN '".ip2long($ip_based_login_options['start'])."' AND '".ip2long($ip_based_login_options['end'])."'
+		OR `end` BETWEEN '".ip2long($ip_based_login_options['start'])."' AND '".ip2long($ip_based_login_options['end'])."';";
+		$ip_exists = $wpdb->get_results($ip_exists_query);
+		//print_r($ip_exists);
+		
+		if(!empty($ip_exists)){
+			$error[] = 'The Start IP or End IP submitted conflicts with an existing IP range!';
+		}
+		
+		// This is to check if there is any other range exists with the same Start IP
+		$start_ip_exists_query = "SELECT * FROM ".$wpdb->prefix."ip_based_login WHERE 
+		'".ip2long($ip_based_login_options['start'])."' BETWEEN `start` AND `end`;";
+		$start_ip_exists = $wpdb->get_results($start_ip_exists_query);
+		//print_r($start_ip_exists);
+		
+		if(!empty($start_ip_exists)){
+			$error[] = 'The Start IP is present in an existing range!';
+		}
+		
+		// This is to check if there is any other range exists with the same End IP
+		$end_ip_exists_query = "SELECT * FROM ".$wpdb->prefix."ip_based_login WHERE 
+		'".ip2long($ip_based_login_options['end'])."' BETWEEN `start` AND `end`;";
+		$end_ip_exists = $wpdb->get_results($end_ip_exists_query);
+		//print_r($end_ip_exists);
+		
+		if(!empty($end_ip_exists)){
+			$error[] = 'The End IP is present in an existing range!';
+		}
+		
 		if(ip2long($ip_based_login_options['start']) > ip2long($ip_based_login_options['end'])){
 			$error[] = 'The end IP cannot be smaller than the start IP';			
 		}
@@ -383,6 +431,12 @@ function ip_based_login_option_page(){
 		</table>
 		<?php
 	}
+	
+	echo '<br /><br /><br /><br /><hr />
+	IP Based Login is developed by <a href="http://wpinspired.com" target="_blank">WP Inspired</a>. 
+	You can report any bugs <a href="http://wordpress.org/support/plugin/ip-based-login" target="_blank">here</a>. 
+	You can provide any valuable feedback <a href="http://www.wpinspired.com/contact-us/" target="_blank">here</a>.
+	<a href="http://www.wpinspired.com/ip-based-login" target="_blank">Donate</a>';
 }	
 
 // Sorry to see you going
