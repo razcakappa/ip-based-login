@@ -1,13 +1,13 @@
 <?php
 /**
  * @package ip-based-login
- * @version 1.3.3
+ * @version 1.3.4
  */
 /*
 Plugin Name: IP Based Login
 Plugin URI: http://wordpress.org/extend/plugins/ip-based-login/
 Description: IP Based Login is a plugin which allows you to directly login from an allowed IP. You can create ranges and define the IP range which can get access to a particular user. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
-Version: 1.3.3
+Version: 1.3.4
 Author: Brijesh Kothari
 Author URI: http://www.wpinspired.com/
 License: GPLv3 or later
@@ -34,16 +34,38 @@ if(!function_exists('add_action')){
 	exit;
 }
 
-define('ipbl_version', '1.3.3');
+define('ipbl_version', '1.3.4');
 
 // This function adds a link in admin toolbar
 function ipbl_admin_bar() {
 	global $wp_admin_bar;
+	$siteurl = get_option('siteurl');
 
 	$wp_admin_bar->add_node(array(
 		'id'    => 'ipbl-link',
 		'title' => 'Logged in by IP Based Login ('.getip().')',
 		'href'  => 'http://www.wpinspired.com/ip-based-login'
+	));
+
+	$wp_admin_bar->add_node(array(
+		'id'    => 'ipbl-logoff-15',
+		'title' => 'Disable auto login for 15 minutes',
+		'parent' => 'ipbl-link',
+		'href'  => $siteurl.'/wp-admin/options-general.php?page=ip-based-login&no_login=15'
+	));
+
+	$wp_admin_bar->add_node(array(
+		'id'    => 'ipbl-logoff-30',
+		'title' => 'Disable auto login for 30 minutes',
+		'parent' => 'ipbl-link',
+		'href'  => $siteurl.'/wp-admin/options-general.php?page=ip-based-login&no_login=30'
+	));
+
+	$wp_admin_bar->add_node(array(
+		'id'    => 'ipbl-logoff-60',
+		'title' => 'Disable auto login for 1 hour',
+		'parent' => 'ipbl-link',
+		'href'  => $siteurl.'/wp-admin/options-general.php?page=ip-based-login&no_login=60'
 	));
 
 }
@@ -81,6 +103,17 @@ add_action( 'plugins_loaded', 'ip_based_login_update_check' );
 function ip_based_login_update_check(){
 
 global $wpdb;
+	// Check if the user wants to set no_login
+	if(!empty($_REQUEST['no_login'])){
+
+	    $current_user = wp_get_current_user();
+		$no_login = sanitize_variables($_REQUEST['no_login']);
+		$expire_cookie = $no_login * 60;
+		setcookie('ipbl_'.$current_user->user_login, 'no_login', time()+$expire_cookie, '/');
+		wp_logout();
+		wp_redirect(home_url());
+		exit; 
+	}
 
 	$sql = array();
 	$current_version = get_option('ipbl_version');
@@ -110,7 +143,7 @@ function triger_login(){
 	$result = selectquery($query);
 	$username = $result['username'];
 	
-	if(!is_user_logged_in() && !empty($username)){
+	if(!is_user_logged_in() && !empty($username) && empty($_COOKIE['ipbl_'.$username])){
 
 		// What is the user id ?
 		$user = get_userdatabylogin($username);
