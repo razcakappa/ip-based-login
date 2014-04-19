@@ -2,7 +2,7 @@
 Contributors: brijeshk89
 Tags: auto, login, ip, based, authentication, access, credentials, easy access
 Requires at least: 3.0
-Tested up to: 3.8.1
+Tested up to: 3.9
 Stable tag: 1.3.4
 License: GPLv3 or later
 License URI: http://www.gnu.org/licenses/gpl.html
