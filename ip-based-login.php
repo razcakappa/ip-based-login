@@ -383,9 +383,29 @@ function ip_based_login_option_page(){
 	$ipranges = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."ip_based_login;", 'ARRAY_A');
 	
 	// A list of all users
-	$_users = get_users();	
+	$_users = get_users();
+	
+	foreach($_users as $uk => $uv){
+		$_users[$uk] = ipbl_objectToArray($uv);
+		$all_users[] = '"'.$_users[$uk]['data']['user_login'].'"';
+	}
 	
 	?>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
+	<script src="//code.jquery.com/jquery-1.10.2.js"></script>
+	<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <script>
+	$(function(){
+		var availableUsers = [
+			<?php echo implode(', ', $all_users); ?>
+		];
+		
+		$( "#username" ).autocomplete({
+			source: availableUsers
+		});
+	
+	});
+	</script>
 	<div class="wrap">
 	  <h2><?php echo __('IP Based Login Settings','ip-based-login'); ?></h2>
 	  <form action="options-general.php?page=ip-based-login" method="post">
@@ -394,14 +414,7 @@ function ip_based_login_option_page(){
 		  <tr>
 			<th scope="row" valign="top"><?php echo __('Username','ip-based-login'); ?></th>
 			<td>
-            	<select name="username">
-            	<?php
-					foreach($_users as $uk => $uv){
-						$_users[$uk] = ipbl_objectToArray($uv);
-						echo '<option value="'.$_users[$uk]['data']['user_login'].'" '.($ip_based_login_options['username'] == $_users[$uk]['data']['user_login'] ? 'selected="selected"' : '').'>'.$_users[$uk]['data']['user_login'].'</option>';
-					}					
-				?>
-                </select>&nbsp;&nbsp;
+            	<input type="text" size="25" value="<?php echo((isset($_POST['username']) ? $_POST['username'] : '')); ?>" name="username" id="username" />
 			  <?php echo __('Username to be logged in as when accessed from the below IP range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
