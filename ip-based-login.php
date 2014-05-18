@@ -1,13 +1,13 @@
 <?php
 /**
  * @package ip-based-login
- * @version 1.3.4
+ * @version 1.3.5
  */
 /*
 Plugin Name: IP Based Login
 Plugin URI: http://wordpress.org/extend/plugins/ip-based-login/
 Description: IP Based Login is a plugin which allows you to directly login from an allowed IP. You can create ranges and define the IP range which can get access to a particular user. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
-Version: 1.3.4
+Version: 1.3.5
 Author: Brijesh Kothari
 Author URI: http://www.wpinspired.com/
 License: GPLv3 or later
@@ -34,7 +34,7 @@ if(!function_exists('add_action')){
 	exit;
 }
 
-define('ipbl_version', '1.3.4');
+define('ipbl_version', '1.3.5');
 
 // This function adds a link in admin toolbar
 function ipbl_admin_bar() {
@@ -152,7 +152,7 @@ function triger_login(){
 		// Lets login
 		wp_set_current_user($user_id, $username);
 		wp_set_auth_cookie($user_id);
-		do_action('wp_login', $username);
+		do_action('wp_login', $username, $user);
 	}
 	
 	// Did we login the user ?
@@ -383,29 +383,9 @@ function ip_based_login_option_page(){
 	$ipranges = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."ip_based_login;", 'ARRAY_A');
 	
 	// A list of all users
-	$_users = get_users();
-	
-	foreach($_users as $uk => $uv){
-		$_users[$uk] = ipbl_objectToArray($uv);
-		$all_users[] = '"'.$_users[$uk]['data']['user_login'].'"';
-	}
+	$_users = get_users();	
 	
 	?>
-    <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css">
-	<script src="//code.jquery.com/jquery-1.10.2.js"></script>
-	<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
-    <script>
-	$(function(){
-		var availableUsers = [
-			<?php echo implode(', ', $all_users); ?>
-		];
-		
-		$( "#username" ).autocomplete({
-			source: availableUsers
-		});
-	
-	});
-	</script>
 	<div class="wrap">
 	  <h2><?php echo __('IP Based Login Settings','ip-based-login'); ?></h2>
 	  <form action="options-general.php?page=ip-based-login" method="post">
@@ -414,20 +394,27 @@ function ip_based_login_option_page(){
 		  <tr>
 			<th scope="row" valign="top"><?php echo __('Username','ip-based-login'); ?></th>
 			<td>
-            	<input type="text" size="25" value="<?php echo((isset($_POST['username']) ? $_POST['username'] : '')); ?>" name="username" id="username" />
+            	<select name="username">
+            	<?php
+					foreach($_users as $uk => $uv){
+						$_users[$uk] = ipbl_objectToArray($uv);
+						echo '<option value="'.$_users[$uk]['data']['user_login'].'" '.($ip_based_login_options['username'] == $_users[$uk]['data']['user_login'] ? 'selected="selected"' : '').'>'.$_users[$uk]['data']['user_login'].'</option>';
+					}					
+				?>
+                </select>&nbsp;&nbsp;
 			  <?php echo __('Username to be logged in as when accessed from the below IP range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
 		  <tr>
-			<th scope="row" valign="top"><?php echo __('Start IP','ip-based-login'); ?></th>
+			<th scope="row" valign="top"><label for="start_ip"><?php echo __('Start IP','ip-based-login'); ?></label></th>
 			<td>
-			  <input type="text" size="25" value="<?php echo((isset($_POST['start_ip']) ? $_POST['start_ip'] : '')); ?>" name="start_ip" /> <?php echo __('Start IP of the range','ip-based-login'); ?> <br />
+			  <input type="text" size="25" value="<?php echo((isset($_POST['start_ip']) ? $_POST['start_ip'] : '')); ?>" name="start_ip" id="start_ip" /> <?php echo __('Start IP of the range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
 		  <tr>
-			<th scope="row" valign="top"><?php echo __('End IP','ip-based-login'); ?></th>
+			<th scope="row" valign="top"><label for="end_ip"><?php echo __('End IP','ip-based-login'); ?></label></th>
 			<td>
-			  <input type="text" size="25" value="<?php echo((isset($_POST['end_ip']) ? $_POST['end_ip'] : '')); ?>" name="end_ip" /> <?php echo __('End IP of the range','ip-based-login'); ?> <br />
+			  <input type="text" size="25" value="<?php echo((isset($_POST['end_ip']) ? $_POST['end_ip'] : '')); ?>" name="end_ip" id="end_ip" /> <?php echo __('End IP of the range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
 		  <tr>
@@ -479,7 +466,7 @@ function ip_based_login_option_page(){
 	}
 	
 	echo '<br /><br /><br /><br /><hr />
-	IP Based Login is developed by <a href="http://wpinspired.com" target="_blank">WP Inspired</a>. 
+	IP Based Login v'.ipbl_version.' is developed by <a href="http://wpinspired.com" target="_blank">WP Inspired</a>. 
 	You can report any bugs <a href="http://wordpress.org/support/plugin/ip-based-login" target="_blank">here</a>. 
 	You can provide any valuable feedback <a href="http://www.wpinspired.com/contact-us/" target="_blank">here</a>.
 	<a href="http://www.wpinspired.com/ip-based-login" target="_blank">Donate</a>';
