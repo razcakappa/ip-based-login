@@ -1,13 +1,13 @@
 <?php
 /**
  * @package ip-based-login
- * @version 1.3.5
+ * @version 1.3.6
  */
 /*
 Plugin Name: IP Based Login
 Plugin URI: http://wordpress.org/extend/plugins/ip-based-login/
 Description: IP Based Login is a plugin which allows you to directly login from an allowed IP. You can create ranges and define the IP range which can get access to a particular user. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
-Version: 1.3.5
+Version: 1.3.6
 Author: Brijesh Kothari
 Author URI: http://www.wpinspired.com/
 License: GPLv3 or later
@@ -34,7 +34,7 @@ if(!function_exists('add_action')){
 	exit;
 }
 
-define('ipbl_version', '1.3.5');
+define('ipbl_version', '1.3.6');
 
 // This function adds a link in admin toolbar
 function ipbl_admin_bar() {
@@ -275,6 +275,15 @@ function ip_based_login_option_page(){
 		check_admin_referer('ip-based-login-options');
 	}
 	
+	if(isset($_GET['users_dropdown'])){		
+		$users_dropdown = (int) sanitize_variables($_GET['users_dropdown']);
+		if(!empty($users_dropdown)){
+			update_option('ipbl_dropdown', '1');
+		}else{
+			update_option('ipbl_dropdown', '');			
+		}
+	}
+	
 	if(isset($_GET['delid'])){
 		
 		$delid = (int) sanitize_variables($_GET['delid']);
@@ -383,7 +392,29 @@ function ip_based_login_option_page(){
 	$ipranges = $wpdb->get_results("SELECT * FROM ".$wpdb->prefix."ip_based_login;", 'ARRAY_A');
 	
 	// A list of all users
-	$_users = get_users();	
+	$_users = get_users();
+	$users_dropdown = get_option('ipbl_dropdown');
+	
+	$show_popup = 0;
+	$donate_popup = get_option('ipbl_donate_popup');
+	if(!empty($donate_popup)){
+		if($donate_popup <= date('Ymd', strtotime('-1 month'))){
+			$show_popup = 1;
+			update_option('ipbl_donate_popup', date('Ymd'));
+		}
+	}else{
+		$show_popup = 1;
+		update_option('ipbl_donate_popup', date('Ymd'));
+	}
+	
+	echo '<script>
+	var donate_popup = '.$show_popup.';
+	if(donate_popup == 1){
+		if(confirm("Donate $5 for IP Based Login to support the development")){
+			window.location.href =  "http://www.wpinspired.com/ip-based-login";
+		}
+	}
+	</script>';
 	
 	?>
 	<div class="wrap">
@@ -392,17 +423,35 @@ function ip_based_login_option_page(){
 		<?php wp_nonce_field('ip-based-login-options'); ?>
 	    <table class="form-table">
 		  <tr>
-			<th scope="row" valign="top"><?php echo __('Username','ip-based-login'); ?></th>
+			<th scope="row" valign="top"><label for="username"><?php echo __('Username','ip-based-login'); ?></label></th>
 			<td>
-            	<select name="username">
             	<?php
-					foreach($_users as $uk => $uv){
-						$_users[$uk] = ipbl_objectToArray($uv);
-						echo '<option value="'.$_users[$uk]['data']['user_login'].'" '.($ip_based_login_options['username'] == $_users[$uk]['data']['user_login'] ? 'selected="selected"' : '').'>'.$_users[$uk]['data']['user_login'].'</option>';
-					}					
+				
+					if(!empty($users_dropdown)){
+						echo '<select name="username">';
+						
+						foreach($_users as $uk => $uv){
+							$_users[$uk] = ipbl_objectToArray($uv);
+							echo '<option value="'.$_users[$uk]['data']['user_login'].'" '.($ip_based_login_options['username'] == $_users[$uk]['data']['user_login'] ? 'selected="selected"' : '').'>'.$_users[$uk]['data']['user_login'].'</option>';
+						}
+						
+						echo '</select>&nbsp;&nbsp;';
+					}else{
+						echo '<input type="text" size="25" value="'.((isset($_POST['username']) ? $_POST['username'] : '')).'" name="username" id="username" />';
+					}
+					
 				?>
-                </select>&nbsp;&nbsp;
+                
 			  <?php echo __('Username to be logged in as when accessed from the below IP range','ip-based-login'); ?> <br />
+				<?php
+				
+					if(empty($users_dropdown)){
+						echo __('<a class="submitdelete" href="options-general.php?page=ip-based-login&users_dropdown=1">Show the list of users in a drop down</a>','ip-based-login');
+					}else{						
+						echo __('<a class="submitdelete" href="options-general.php?page=ip-based-login&users_dropdown=0">Don\'t show the list of users in a drop down</a>','ip-based-login');
+					}
+					
+                ?> <br />
 			</td>
 		  </tr>
 		  <tr>
@@ -482,7 +531,9 @@ global $wpdb;
 $sql = "DROP TABLE ".$wpdb->prefix."ip_based_login;";
 $wpdb->query($sql);
 
-delete_option('ipbl_version'); 
+delete_option('ipbl_version');
+delete_option('ipbl_dropdown');
+delete_option('ipbl_donate_popup');
 
 }
 ?>
