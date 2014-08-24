@@ -309,9 +309,9 @@ function ip_based_login_option_page(){
 	if(isset($_POST['add_iprange'])){
 		global $ip_based_login_options;
 
-		$ip_based_login_options['username'] = $_POST['username'];
-		$ip_based_login_options['start'] = $_POST['start_ip'];
-		$ip_based_login_options['end'] = $_POST['end_ip'];
+		$ip_based_login_options['username'] = trim($_POST['username']);
+		$ip_based_login_options['start'] = trim($_POST['start_ip']);
+		$ip_based_login_options['end'] = trim($_POST['end_ip']);
 
 		$ip_based_login_options = sanitize_variables($ip_based_login_options);
 		
@@ -437,7 +437,7 @@ function ip_based_login_option_page(){
 						
 						echo '</select>&nbsp;&nbsp;';
 					}else{
-						echo '<input type="text" size="25" value="'.((isset($_POST['username']) ? $_POST['username'] : '')).'" name="username" id="username" />';
+						echo '<input type="text" size="25" value="'.((isset($_POST['username']) ? trim($_POST['username']) : '')).'" name="username" id="username" />';
 					}
 					
 				?>
@@ -457,13 +457,13 @@ function ip_based_login_option_page(){
 		  <tr>
 			<th scope="row" valign="top"><label for="start_ip"><?php echo __('Start IP','ip-based-login'); ?></label></th>
 			<td>
-			  <input type="text" size="25" value="<?php echo((isset($_POST['start_ip']) ? $_POST['start_ip'] : '')); ?>" name="start_ip" id="start_ip" /> <?php echo __('Start IP of the range','ip-based-login'); ?> <br />
+			  <input type="text" size="25" value="<?php echo((isset($_POST['start_ip']) ? trim($_POST['start_ip']) : '')); ?>" name="start_ip" id="start_ip" /> <?php echo __('Start IP of the range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
 		  <tr>
 			<th scope="row" valign="top"><label for="end_ip"><?php echo __('End IP','ip-based-login'); ?></label></th>
 			<td>
-			  <input type="text" size="25" value="<?php echo((isset($_POST['end_ip']) ? $_POST['end_ip'] : '')); ?>" name="end_ip" id="end_ip" /> <?php echo __('End IP of the range','ip-based-login'); ?> <br />
+			  <input type="text" size="25" value="<?php echo((isset($_POST['end_ip']) ? trim($_POST['end_ip']) : '')); ?>" name="end_ip" id="end_ip" /> <?php echo __('End IP of the range','ip-based-login'); ?> <br />
 			</td>
 		  </tr>
 		  <tr>
