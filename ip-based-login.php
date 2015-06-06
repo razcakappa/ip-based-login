@@ -1,13 +1,13 @@
 <?php
 /**
  * @package ip-based-login
- * @version 1.3.7
+ * @version 1.3.8
  */
 /*
 Plugin Name: IP Based Login
 Plugin URI: http://wordpress.org/extend/plugins/ip-based-login/
 Description: IP Based Login is a plugin which allows you to directly login from an allowed IP. You can create ranges and define the IP range which can get access to a particular user. So if you want to allow someone to login but you do not want to share the login details just add their IP using IP Based Login.
-Version: 1.3.7
+Version: 1.3.8
 Author: Brijesh Kothari
 Author URI: http://www.wpinspired.com/
 License: GPLv3 or later
@@ -34,7 +34,7 @@ if(!function_exists('add_action')){
 	exit;
 }
 
-define('ipbl_version', '1.3.7');
+define('ipbl_version', '1.3.8');
 
 // This function adds a link in admin toolbar
 function ipbl_admin_bar() {
@@ -162,6 +162,17 @@ function triger_login(){
 }
 
 add_action('init', 'triger_login');
+
+// Add settings link on plugin page
+function ipbl_settings_link($links) { 
+  $settings_link = '<a href="options-general.php?page=ip-based-login">Settings</a>'; 
+  array_unshift($links, $settings_link); 
+  return $links; 
+}
+ 
+$plugin = plugin_basename(__FILE__); 
+add_filter("plugin_action_links_$plugin", 'ipbl_settings_link' );
+
 add_action('admin_menu', 'ip_based_login_admin_menu');
 
 function getip(){
