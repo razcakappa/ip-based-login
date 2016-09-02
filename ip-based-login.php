@@ -217,7 +217,6 @@ function sanitize_variables($variables = array()){
 		foreach($variables as $k => $v){
 			$variables[$k] = trim($v);
 			$variables[$k] = escapeshellcmd($v);
-			$variables[$k] = mysql_real_escape_string($v);
 		}
 	}else{
 		$variables = mysql_real_escape_string(escapeshellcmd(trim($variables)));
