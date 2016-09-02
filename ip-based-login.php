@@ -219,7 +219,7 @@ function sanitize_variables($variables = array()){
 			$variables[$k] = escapeshellcmd($v);
 		}
 	}else{
-		$variables = mysql_real_escape_string(escapeshellcmd(trim($variables)));
+		$variables = escapeshellcmd(trim($variables));
 	}
 	
 	return $variables;
